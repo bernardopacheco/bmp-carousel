@@ -1,0 +1,64 @@
+#wrap {
+  padding: 1em;
+  background: var(--curious-blue-color);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.carousel {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.carousel-track {
+  position: relative;
+  top: 0;
+  left: 0;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: calc(var(--carousel-track-width) * 1px);
+  transform: translate3d(calc(var(--carousel-track-x-translate) * 1px), 0px, 0px);
+  transition: 500ms ease-in-out;
+}
+
+.carousel-slide {
+  float: left;
+  height: 100%;
+  min-height: 1px;
+  margin: calc(var(--carousel-slide-margin) * 1px);
+  width: calc(var(--carousel-slide-width) * 1px);
+  transition: transform 0.4s ease;
+}
+
+.carousel-slide > div {
+  background: var(--white-color);
+  color: var(--curious-blue-color);
+  font-size: 36px;
+  line-height: 100px;
+  position: relative;
+  text-align: center;
+}
+
+.carousel-slide.current {
+  transform: scale(1.08);
+  transition: transform 0.4s cubic-bezier(.48,-0.28,.41,1.4);
+}
+
+#controls {
+  clear: both;
+  height: 1em;
+  margin: 0 0 1em 0;
+}
+
+#controls div {
+  float: left;
+  margin: 0 0.5em 0 0;
+  padding: 0.2em;
+  color: var(--white-color);
+  background: var(--black-color);
+  cursor: pointer;
+}
