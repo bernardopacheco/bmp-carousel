@@ -3,10 +3,5 @@
   --white-color: #fff;
   --black-color: #000;
   --curious-blue-color: #3498db;
-
-  /* Caroulsel */
-  --carousel-slide-width: 187;
   --carousel-slide-margin: 10;
-  --carousel-track-width: 5000; /* A high number. It'll be calculated depending on the num of slides */
-  --carousel-track-x-translate: 0; /* It'll be calculated depending on the active slide */
 }

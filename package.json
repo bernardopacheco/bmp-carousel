@@ -1,7 +1,7 @@
 {
   "name": "bmp-carousel",
   "version": "1.0.0",
-  "description": "A pure web component carousel",
+  "description": "A pure Web Component carousel",
   "repository": {
     "type": "git",
     "url": "https://github.com/bernardopacheco/bmp-carousel.git"

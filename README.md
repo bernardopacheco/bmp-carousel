@@ -1,3 +1,3 @@
 # bmp-carousel
 
-A pure carousel Web Component
+A pure Web Component carousel

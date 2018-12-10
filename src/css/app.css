@@ -1,4 +1,10 @@
 @import "../../node_modules/normalize.css/normalize.css";
 @import "./reset.css";
 @import "./variables.css";
-@import "./carousel.css";
+
+#wrap {
+  padding: 1em;
+  background: var(--curious-blue-color);
+  margin: 0 auto;
+  width: 100%;
+}
