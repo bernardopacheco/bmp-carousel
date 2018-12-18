@@ -6,11 +6,102 @@
     <link rel="stylesheet" href="src/css/app.css" />
   </head>
   <body>
-    <div id="wrap"><bp-carousel></bp-carousel></div>
+    <div id="wrap">
+      <bp-carousel>
+        <div class="item">
+          <div data-carousel-bind="name"></div>
+          <img data-carousel-bind="image" />
+        </div>
+      </bp-carousel>
+    </div>
+
+    <h2 id="previous" style="float: left; margin-left: 20px; cursor: pointer;">Previous</h2>
+    <h2 id="next" style="float: right; margin-right: 20px; cursor: pointer;">Next</h2>
 
     <script
       type="text/javascript"
       src="src/js/bp-carousel-component.js"
     ></script>
+
+    <script>
+      var carousel = document.querySelector("bp-carousel");
+      var items = [
+        {
+          id: 1,
+          name: "elvis",
+          image:
+            "http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/cat-icon.png"
+        },
+        {
+          id: 2,
+          name: "presley",
+          image:
+            "https://i.pinimg.com/236x/10/57/20/10572000173e6c1d66da2cbde0ea0eb4--dog-cartoons-scooby-doo.jpg"
+        },
+        {
+          id: 3,
+          name: "elvis",
+          image:
+            "http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/cat-icon.png"
+        },
+        {
+          id: 4,
+          name: "presley",
+          image:
+            "https://i.pinimg.com/236x/10/57/20/10572000173e6c1d66da2cbde0ea0eb4--dog-cartoons-scooby-doo.jpg"
+        },
+        {
+          id: 5,
+          name: "elvis",
+          image:
+            "http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/cat-icon.png"
+        },
+        {
+          id: 6,
+          name: "presley",
+          image:
+            "https://i.pinimg.com/236x/10/57/20/10572000173e6c1d66da2cbde0ea0eb4--dog-cartoons-scooby-doo.jpg"
+        },
+        {
+          id: 7,
+          name: "elvis",
+          image:
+            "http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/cat-icon.png"
+        },
+        {
+          id: 8,
+          name: "presley",
+          image:
+            "https://i.pinimg.com/236x/10/57/20/10572000173e6c1d66da2cbde0ea0eb4--dog-cartoons-scooby-doo.jpg"
+        },
+        {
+          id: 9,
+          name: "elvis",
+          image:
+            "http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/cat-icon.png"
+        },
+        {
+          id: 10,
+          name: "presley",
+          image:
+            "https://i.pinimg.com/236x/10/57/20/10572000173e6c1d66da2cbde0ea0eb4--dog-cartoons-scooby-doo.jpg"
+        }
+      ];
+
+      carousel.setItems(items);
+
+      //  Log selected slide.
+      carousel.addEventListener("slide-select", e => {
+        console.log(e.detail.item);
+      });
+
+      document.getElementById("next").addEventListener("click", e => {
+        carousel.next();
+      });
+
+      document.getElementById("previous").addEventListener("click", e => {
+        carousel.previous();
+      });
+    </script>
   </body>
 </html>

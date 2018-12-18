@@ -1,14 +1,8 @@
-import Utils from "./utils.js";
-
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
       display: block;
-      --carousel-slide-width: 187;
-      --carousel-slide-margin: 10;
-      --carousel-track-width: 5000; /* A high number. It'll be calculated depending on the num of slides */
-      --carousel-track-x-translate: 0; /* It'll be calculated depending on the active slide */
     }
 
     .carousel {
@@ -26,59 +20,32 @@ template.innerHTML = `
       display: block;
       margin-left: auto;
       margin-right: auto;
-      width: calc(var(--carousel-track-width) * 1px);
-      transform: translate3d(
-        calc(var(--carousel-track-x-translate) * 1px),
-        0px,
-        0px
-      );
+      width: 5000px; /* A high number. It'll be calculated depending on the num of slides */
+      transform: translate3d(0px, 0px, 0px); /* It'll be calculated depending on the active slide */
       transition: 500ms ease-in-out;
     }
 
-    .carousel-slide {
+    ::slotted(.carousel-slide) {
       float: left;
       height: 100%;
       min-height: 1px;
-      margin: calc(var(--carousel-slide-margin) * 1px);
-      width: calc(var(--carousel-slide-width) * 1px);
       transition: transform 0.4s ease;
     }
-    
-    .carousel-slide > div {
-      background: var(--white-color);
-      color: var(--curious-blue-color);
-      font-size: 36px;
-      line-height: 100px;
-      position: relative;
-      text-align: center;
-    }
-    
-    .carousel-slide.current {
+
+    ::slotted(.carousel-slide.active) {
       transform: scale(1.08);
-      transition: transform 0.4s cubic-bezier(0.48, -0.28, 0.41, 1.4);
+      transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) 0s;
     }
   </style>
 
   <div class="carousel">
     <div class="carousel-track">
-      <div class="carousel-slide" id="1"><div>1</div></div>
-      <div class="carousel-slide" id="2"><div>2</div></div>
-      <div class="carousel-slide" id="3"><div>3</div></div>
-      <div class="carousel-slide" id="4"><div>4</div></div>
-      <div class="carousel-slide" id="5"><div>5</div></div>
-      <div class="carousel-slide" id="6"><div>6</div></div>
-      <div class="carousel-slide" id="7"><div>7</div></div>
-      <div class="carousel-slide" id="8"><div>8</div></div>
-      <div class="carousel-slide" id="9"><div>9</div></div>
-      <div class="carousel-slide" id="10"><div>10</div></div>
-      <div class="carousel-slide" id="11"><div>11</div></div>
-      <div class="carousel-slide" id="12"><div>12</div></div>
-      <div class="carousel-slide" id="13"><div>13</div></div>
-      <div class="carousel-slide" id="14"><div>14</div></div>
-      <div class="carousel-slide" id="15"><div>15</div></div>
+      <slot></slot>
     </div>
   </div>
 `;
+
+const WEB_COMPONENT_NAME = "bp-carousel";
 
 export class Carousel extends HTMLElement {
   constructor() {
@@ -86,48 +53,236 @@ export class Carousel extends HTMLElement {
     this.root = this.attachShadow({ mode: "open" });
     this.root.appendChild(template.content.cloneNode(true));
 
-    this.carousel = this.root.querySelector(".carousel");
-    this.slides = this.root.querySelectorAll(".carousel-slide");
-    this.slideWidth = Utils.getCSSVariableAsNum(this.root, "--carousel-slide-width");
-    this.slideMargin = Utils.getCSSVariableAsNum(this.root, "--carousel-slide-margin");
-    this.carouselTrackWidth =
-      this.slides.length * (this.slideWidth + 2 * this.slideMargin);
-    this.currentSlideElem;
+    /** @type {HTMLDivElement} - The main carousel element. */
+    this.carouselElement = this.root.querySelector(".carousel");
+
+    /** @type {HTMLDivElement} - The track to be slided. */
+    this.carouselTrackElement = this.root.querySelector(".carousel-track");
+
+    /** @type {NodeList} - List of all slides in the carousel. */
+    this.slides;
+
+    /** @type {HTMLDivElement} - The active slide. */
+    this.activeSlideElement;
+
+    /** @type {number} - The slide width. */
+    this.slideWidth;
+
+    /** @type {number} - The carousel track width. */
+    this.carouselTrackWidth;
+
+    /** @type {Object[]} - User's items used to create carousel slides. */
+    this.items;
+
+    window.addEventListener("resize", this.onWindowResize.bind(this));
   }
 
-  connectedCallback() {
-    Utils.setCSSVariable(this.root, "--carousel-track-width", this.carouselTrackWidth);
-    this.currentSlideElem = this.slides[0];
-    this.currentSlideElem.classList.add("current");
+  /**
+   * Select a slide on a click event.
+   *
+   * @private
+   * @param {MouseEvent} event - The event containing which slide was selected.
+   * @return {void}
+   */
+  onSlideSelect(event) {
+    this.selectSlide(event.currentTarget);
+  }
+
+  /**
+   * Update carousel position on windows resize.
+   *
+   * @private
+   * @return {void}
+   */
+  onWindowResize() {
+    this.updateCarouselElements();
+    this.moveCarousel(this.activeSlideElement);
+  }
+
+  /**
+   * Update carousel elements width.
+   *
+   * @private
+   * @return {void}
+   */
+  updateCarouselElements() {
+    this.slideWidth = this.children[0].getBoundingClientRect().width;
+    this.carouselTrackWidth = this.items.length * this.slideWidth;
+    //  Triple width to avoid stacking really large slides on windows resize.
+    this.carouselTrackElement.style.width = `${this.carouselTrackWidth * 3}px`;
+  }
+
+  /**
+   * Move the carousel track when a slide is selected.
+   *
+   * @private
+   * @param {HTMLDivElement} slideElement - Slide that has just been selected.
+   * @return {void}
+   */
+  selectSlide(slideElement) {
+    //  Update carousel position.
+    this.moveCarousel(slideElement);
+
+    //  Set a new active slide.
+    this.activeSlideElement.classList.remove("active");
+    this.activeSlideElement = slideElement;
+    this.activeSlideElement.classList.add("active");
+
+    this.notifySlideSelect();
+  }
+
+  /**
+   * Update the carousel position from the chosen slide.
+   *
+   * @private
+   * @param {HTMLDivElement} slideElement - Slide that has just been selected.
+   * @return {void}
+   */
+  moveCarousel(slideElement) {
+    /** @const {number} - Slide index. */
+    const slideIndex = parseInt(slideElement.id, 10);
+
+    /** @const {number} - Offset to place this slide as the first left visible slide. */
+    const asFirstSlideOffset = slideIndex * this.slideWidth;
+
+    /** @const {number} - Offset to place this slide in the middle of the carousel. */
+    const halfCarouselWidth = this.carouselElement.offsetWidth / 2;
+
+    /** @const {number} - Offset to center the slide. */
+    const halfSlideWidth = this.slideWidth / 2;
+
+    /** @type {number} - Candidate for the next carousel track position. */
+    let carouselTrackPosition =
+      -asFirstSlideOffset + halfCarouselWidth - halfSlideWidth;
+
+    /** @const {number} - At the most left slide. */
+    const exceededLeftBoundary = carouselTrackPosition > 0;
+
+    /** @const {number} - At the most right slide. */
+    const exceededRightBoundary =
+      carouselTrackPosition <
+      -this.carouselTrackWidth + this.carouselElement.offsetWidth;
+
+    //  Check left and right boundaries.
+    if (exceededLeftBoundary) {
+      carouselTrackPosition = 0;
+    } else if (exceededRightBoundary) {
+      carouselTrackPosition =
+        -this.carouselTrackWidth + this.carouselElement.offsetWidth;
+    }
+
+    //  Move the carousel track.
+    this.carouselTrackElement.style.transform = `translate3d(${carouselTrackPosition}px, 0px, 0px)`;
+  }
+
+  /**
+   * For each item object, create a slide element.
+   *
+   * @param {Object[]} items - User's items used to create carousel slides.
+   * @return {void}
+   */
+  setItems(items) {
+    if (!items.length) {
+      return;
+    }
+
+    this.items = items;
+
+    /** @type {HTMLElement} - The web component element. */
+    let webComponentElement = this;
+
+    /** @type {HTMLElement} - A detached element that represents a user's item template. It's known as Light DOM. */
+    let slideTemplateElement = webComponentElement.children[0].cloneNode(true);
+    //  Clean up the attached user's element template.
+    webComponentElement.removeChild(webComponentElement.children[0]);
+
+    //  Bind each item to a slide element into carousel.
+    this.items.forEach((item, index) => {
+      /** @const {HTMLElement} - Slide to be added. */
+      const slideElement = slideTemplateElement.cloneNode(true);
+
+      /** @type {NodeList} - Element list to be bound. */
+      let nodes = slideElement.querySelectorAll("[data-carousel-bind]");
+
+      nodes.forEach(
+        /** @type {HTMLElement} - Element to be bound. */
+        node => {
+          /** @const {string} - Attribute value. */
+          const value = item[node.getAttribute("data-carousel-bind")];
+
+          if (node.nodeName.toLowerCase() === "img") {
+            node.src = value;
+          } else {
+            node.innerHTML = value;
+          }
+        }
+      );
+
+      /** @type {HTMLElement} - Slide container. */
+      let div = document.createElement("div");
+      div.setAttribute("id", index); //  items are numbered from 0 to N - 1
+      div.classList.add("carousel-slide");
+      div.appendChild(slideElement);
+      webComponentElement.appendChild(div);
+    });
+
+    this.updateCarouselElements();
+
+    this.slides = webComponentElement.querySelectorAll(".carousel-slide");
+
+    this.activeSlideElement = this.slides[0];
+    this.activeSlideElement.classList.add("active");
 
     this.slides.forEach(slide => {
-      slide.addEventListener("click", this.onSlideSelected.bind(this));
+      slide.addEventListener("click", this.onSlideSelect.bind(this));
     });
   }
 
-  onSlideSelected(e) {
-    const index = parseInt(e.target.parentNode.id, 10);
+  /**
+   * Dispatch a slide selected event.
+   *
+   * @private
+   * @return {void}
+   */
+  notifySlideSelect() {
+    /** @const {number} - Active slide index. */
+    const slideIndex = parseInt(this.activeSlideElement.id, 10);
 
-    const toBeTheFirst = (index - 1) * 207;
-    const toBeInTheMiddle = this.carousel.offsetWidth / 2;
-    const halfSlide = 207 / 2;
+    this.dispatchEvent(
+      new CustomEvent("slide-select", {
+        detail: {
+          item: this.items[slideIndex]
+        }
+      })
+    );
+  }
 
-    let newXPosition = -toBeTheFirst + toBeInTheMiddle - halfSlide;
+  /**
+   * Select the next slide.
+   * @returns {void}
+   */
+  next() {
+    let activeSlideIndex = parseInt(this.activeSlideElement.id, 10);
+    const hasNextSlide = activeSlideIndex + 1 < this.items.length;
 
-    if (newXPosition > 0) {
-      newXPosition = 0;
-    } else if (
-      newXPosition <
-      -this.carouselTrackWidth + this.carousel.offsetWidth
-    ) {
-      newXPosition = -this.carouselTrackWidth + this.carousel.offsetWidth;
+    if (hasNextSlide) {
+      this.selectSlide(this.slides[activeSlideIndex + 1]);
     }
+  }
 
-    this.currentSlideElem.classList.remove("current");
-    this.currentSlideElem = e.target.parentNode;
-    this.currentSlideElem.classList.add("current");
-    Utils.setCSSVariable(this.root, "--carousel-track-x-translate", newXPosition);
+  /**
+   * Select the previous slide.
+   * @returns {void}
+   */
+  previous() {
+    let activeSlideIndex = parseInt(this.activeSlideElement.id, 10);
+    const hasPreviousSlide = activeSlideIndex - 1 >= 0;
+
+    if (hasPreviousSlide) {
+      this.selectSlide(this.slides[activeSlideIndex - 1]);
+    }
   }
 }
 
-customElements.define("bp-carousel", Carousel);
+//  Define the web component
+customElements.define(WEB_COMPONENT_NAME, Carousel);
