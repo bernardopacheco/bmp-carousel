@@ -88,7 +88,7 @@
         }
       ];
 
-      carousel.setItems(items);
+      carousel.setSlides(items, 8);
 
       //  Log selected slide.
       carousel.addEventListener("slide-select", e => {
@@ -102,6 +102,10 @@
       document.getElementById("previous").addEventListener("click", e => {
         carousel.previous();
       });
+
+      setTimeout(() => {
+        carousel.setActiveSlide(22); //  an invalid index sets the first slide
+      }, 2000);
     </script>
   </body>
 </html>

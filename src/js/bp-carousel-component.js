@@ -120,6 +120,12 @@ export class Carousel extends HTMLElement {
    * @return {void}
    */
   selectSlide(slideElement) {
+    if (!slideElement) {
+      //  If slideElement is not valid, set the first slide as default.
+      slideElement = this.slides[0];
+      this.activeSlideElement = this.slides[0];
+    }
+
     //  Update carousel position.
     this.moveCarousel(slideElement);
 
@@ -176,12 +182,32 @@ export class Carousel extends HTMLElement {
   }
 
   /**
+   * Dispatch a slide selected event.
+   *
+   * @private
+   * @return {void}
+   */
+  notifySlideSelect() {
+    /** @const {number} - Active slide index. */
+    const slideIndex = parseInt(this.activeSlideElement.id, 10);
+
+    this.dispatchEvent(
+      new CustomEvent("slide-select", {
+        detail: {
+          item: this.items[slideIndex]
+        }
+      })
+    );
+  }
+
+  /**
    * For each item object, create a slide element.
    *
    * @param {Object[]} items - User's items used to create carousel slides.
+   * @param {number} activeItemIndex - The initial active slide index.
    * @return {void}
    */
-  setItems(items) {
+  setSlides(items, activeItemIndex) {
     if (!items.length) {
       return;
     }
@@ -230,8 +256,8 @@ export class Carousel extends HTMLElement {
 
     this.slides = webComponentElement.querySelectorAll(".carousel-slide");
 
-    this.activeSlideElement = this.slides[0];
-    this.activeSlideElement.classList.add("active");
+    this.activeSlideElement = this.slides[activeItemIndex];
+    this.setActiveSlide(activeItemIndex);
 
     this.slides.forEach(slide => {
       slide.addEventListener("click", this.onSlideSelect.bind(this));
@@ -239,22 +265,13 @@ export class Carousel extends HTMLElement {
   }
 
   /**
-   * Dispatch a slide selected event.
+   * Set a slide as the active slide.
    *
-   * @private
+   * @param {number} activeItemIndex - The active slide index.
    * @return {void}
    */
-  notifySlideSelect() {
-    /** @const {number} - Active slide index. */
-    const slideIndex = parseInt(this.activeSlideElement.id, 10);
-
-    this.dispatchEvent(
-      new CustomEvent("slide-select", {
-        detail: {
-          item: this.items[slideIndex]
-        }
-      })
-    );
+  setActiveSlide(activeItemIndex) {
+    this.selectSlide(this.slides[activeItemIndex]);
   }
 
   /**
@@ -263,11 +280,7 @@ export class Carousel extends HTMLElement {
    */
   next() {
     let activeSlideIndex = parseInt(this.activeSlideElement.id, 10);
-    const hasNextSlide = activeSlideIndex + 1 < this.items.length;
-
-    if (hasNextSlide) {
-      this.selectSlide(this.slides[activeSlideIndex + 1]);
-    }
+    this.selectSlide(this.slides[activeSlideIndex + 1]);
   }
 
   /**
@@ -276,11 +289,7 @@ export class Carousel extends HTMLElement {
    */
   previous() {
     let activeSlideIndex = parseInt(this.activeSlideElement.id, 10);
-    const hasPreviousSlide = activeSlideIndex - 1 >= 0;
-
-    if (hasPreviousSlide) {
-      this.selectSlide(this.slides[activeSlideIndex - 1]);
-    }
+    this.selectSlide(this.slides[activeSlideIndex - 1]);
   }
 }
 
